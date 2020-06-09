@@ -6,22 +6,112 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
-## R Markdown
+# Description of JSON Data
+## [What it is?](https://en.wikipedia.org/wiki/JSON)
 
+JSON (JavaScript Object Notation) is an open standard file format, and data interchange format, that uses human-readable text to store and transmit data objects consisting of attribute–value pairs and array data types (or any other serializable value). JSON is a language-independent data format. It was derived from JavaScript, but many modern programming languages include code to generate and parse JSON-format data. 
 
-```{r cars}
-summary(cars)
+## [Where does it get used?](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON)
+
+JSON is commonly used for transmitting data in web applications (e.g., sending some data from the server to the client, so it can be displayed on a web page, or vice versa). And It’s also becoming an increasingly common format for database migration from modern apps (such as MixPanel, SalesForce, and Shopify) over to SQL databases. 
+
+## [Why is it a good way to store data?](https://blog.sqlizer.io/posts/json-store-data/)
+
+JSON is perfect for storing temporary data that’s consumed by the entity that creates the data. A good example is user-generated data such as filling out a form or information exchange between an API and an app. Stored JSON data must be text but this means JSON can be used as a data format for any programming language, providing a high level of interoperability. It also means data stored in JSON files are easily sent between servers. This is a bonus for database migration.
+
+# Discussion on packages available for reading JSON data into R
+
+`rjson`: This does not use S4/S3 methods and so is not readily extensible, but still useful. Unfortunately, it does not used vectorized operations and so is too slow for non-trivial data. Similarly, for reading JSON data into R, it is somewhat slow and so does not scale to large data, should this be an issue.
+
+`RJSONIO`: This is an alternative to `rjson` package. Originally, that was too slow for converting large R objects to JSON and was not extensible. rjson's performance is now similar to this package, and perhaps slightly faster in some cases. The two packages intentionally share the same basic interface. This package (`RJSONIO`) has many additional options to allow customizing the generation and processing of JSON content. This package uses libjson rather than implementing yet another JSON parser. 
+
+`jsonlite`: This is a fork of the `RJSONIO` package. It builds on the parser from `RJSONIO` but implements a different mapping between R objects and JSON strings. The C code in this package is mostly from the `RJSONIO` Package, the R code has been rewritten from scratch. In addition to drop-in replacements for `fromJSON` and `toJSON`, the package has functions to serialize objects. Furthermore, the package contains a lot of unit tests to make sure that all edge cases are encoded and decoded consistently for use with dynamic data in systems and applications. Thus, I choose `jsonlite`.
+
+```{r}
+# prepare for the packages
+library(httr)
+library(jsonlite)
+library(tidyverse)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+# write a function to get specific url
+url <- function(kind,ID=NULL){
+  base_url <- "https://records.nhl.com/site/api/franchise"
+  if(kind == "base"){
+    return("https://records.nhl.com/site/api/franchise")}
+  else if(kind == "TeamTotal"){
+    return( paste(base_url, "team","totals", sep="-"))
+  }else{
+    return(paste0(paste(base_url,kind,"records",sep="-"),"?",paste("cayenneExp","franchiseId",ID,sep="=")))
+  }
+}
+# write a function to get data from specific url
+GetData <- function(url){
+  url %>%
+    GET(.) %>%
+    # turn it into JSON text form
+    content(as="text") %>%
+    # convert it to a list
+    fromJSON(flatten=TRUE)
+}
+# url(kind="season",ID="1")
+# url(kind="goalie",ID="2")
+# url(kind="skater",ID="3")
+# url("base")
+# url("TeamTotal")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Once you have the functions to query the data, you should perform a basic exploratory data analysis. Not all things reported need to show something interesting or meaningful (i.e. graphs that show no relationship are ﬁne) but you should discuss each graph (if you don’t know hockey, that is ok - simply discuss the graphs and summaries as best you can). A few requirements are below:
+
+# Exploratory Data Analysis
+## Categorical data
+*which data is categorical data*
+*which id should be concerned*
+
+### Statistical Summary for categorical data
+```{r}
+# call above two functions together to get specific data
+NHLid <- GetData(url("base"))
+TeamTotal <- GetData(url("TeamTotal"))
+NHLid
+TeamTotal
+str(NHLid)
+str(TeamTotal)
+# season_id2
+# goalie
+# skater
+```
+
+### Graph display for categorical data
+```{r}
+
+```
+
+## Numeric data
+*which data is numeric data*
+*which id should be concerned*
+
+### Statistical summary for numeric data
+```{r}
+
+```
+
+### Graph display for numeric data
+```{r}
+
+```
+
+
+– You should create a new variable at some point 
+– You should create some contingency tables and numeric summaries by some of your categorical variables 
+– You should create some plots (at least a side-by-side bar plot, side-by-side box plots, and scatter plots with coloring
