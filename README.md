@@ -1,7 +1,7 @@
 Project1
 ================
 Zhijun Liu
-2020-06-10
+2020-06-11
 
   - [Abstract](#abstract)
   - [Introduction](#introduction)
@@ -15,19 +15,22 @@ Zhijun Liu
   - [NHL & NHL Data](#nhl-nhl-data)
       - [What is NHL?](#what-is-nhl)
       - [View the NHL data](#view-the-nhl-data)
-      - [The reason of variable I
-        choose](#the-reason-of-variable-i-choose)
   - [Exploratory Data Analysis](#exploratory-data-analysis)
-      - [Categorical data](#categorical-data)
-          - [Statistical Summary for categorical
-            data](#statistical-summary-for-categorical-data)
-          - [Graph display for categorical
-            data](#graph-display-for-categorical-data)
-      - [Numeric data](#numeric-data)
-          - [Statistical summary for numeric
-            data](#statistical-summary-for-numeric-data)
-          - [Graph display for numeric
-            data](#graph-display-for-numeric-data)
+      - [winPct & futureWin in
+        teamtotalData](#winpct-futurewin-in-teamtotaldata)
+          - [Treat the winPct as categorical
+            data](#treat-the-winpct-as-categorical-data)
+          - [Treat the winPct as numeric
+            data](#treat-the-winpct-as-numeric-data)
+      - [mfWinRatio & steadyWin in
+        seasonData](#mfwinratio-steadywin-in-seasondata)
+          - [Treat the winPct as categorical
+            data](#treat-the-winpct-as-categorical-data-1)
+          - [Treat the winPct as numeric
+            data](#treat-the-winpct-as-numeric-data-1)
+      - [The best and Worst id](#the-best-and-worst-id)
+      - [The difference in goalie of 38 and
+        28](#the-difference-in-goalie-of-38-and-28)
   - [Conclusion](#conclusion)
   - [Discussion on this project](#discussion-on-this-project)
       - [what would you do differently?](#what-would-you-do-differently)
@@ -106,12 +109,6 @@ migration.(<https://blog.sqlizer.io/posts/json-store-data/>)
 
 ## What is NHL?
 
-``` r
-include_graphics("D:/2020_3rd_semester/ST558/6. Project/WeaverLankow.jpg")
-```
-
-![](D:/2020_3rd_semester/ST558/6.%20Project/WeaverLankow.jpg)<!-- -->
-
 The National Hockey League (NHL) is a professional ice hockey league in
 North America, currently comprising 31 teams: 24 in the United States
 and seven in Canada. The NHL is considered to be the premier
@@ -131,235 +128,164 @@ season.(<https://en.wikipedia.org/wiki/Category:National_Hockey_League_teams>)
 
 ## View the NHL data
 
-``` r
-# write a function to get specific url
-url <- function(kind,ID=NULL){
-  base_url <- "https://records.nhl.com/site/api/franchise"
-  if(kind == "base"){
-    return("https://records.nhl.com/site/api/franchise")}
-  else if(kind == "TeamTotal"){
-    return( paste(base_url, "team","totals", sep="-"))
-  }else{
-    return(paste0(paste(base_url,kind,"records",sep="-"),"?",paste("cayenneExp","franchiseId",ID,sep="=")))
-  }
-}
-# write a function to get data from specific url
-GetData <- function(url){
-  url %>%
-    GET(.) %>%
-    # turn it into JSON text form
-    content(as="text") %>%
-    # convert it to a list
-    fromJSON(flatten=TRUE) 
-}
-```
-
-``` r
-# call above two functions together to get specific data
-Franchise <- GetData(url("base"))$data
-TeamTotal <- GetData(url("TeamTotal"))$data
-# write a function to combine all the id(1-38) of specific table
-CData <- function(kind){
-  y <- NULL
-  for(i in 1:38){
-    x <- GetData(url(kind,ID=as.character(i)))$data
-    y <- rbind(x,y)
-  }
-  return(y)
-}
-# get the season table of all id
-Season <- CData("season")
-# get the goalie table of all id
-Goalie <- CData("goalie")
-# get the skater table of all id
-Skater <- CData("skater")
-```
-
-``` r
-# view the data set
-tbl_df(Franchise) %>% 
-  select(id,contains("Name")) %>% 
-  rename("franchiseId"=id)
-#> # A tibble: 38 x 3
-#>    franchiseId teamCommonName teamPlaceName
-#>          <int> <chr>          <chr>        
-#>  1           1 Canadiens      Montréal     
-#>  2           2 Wanderers      Montreal     
-#>  3           3 Eagles         St. Louis    
-#>  4           4 Tigers         Hamilton     
-#>  5           5 Maple Leafs    Toronto      
-#>  6           6 Bruins         Boston       
-#>  7           7 Maroons        Montreal     
-#>  8           8 Americans      Brooklyn     
-#>  9           9 Quakers        Philadelphia 
-#> 10          10 Rangers        New York     
-#> # ... with 28 more rows
-tbl_df(TeamTotal) %>% 
-  select(franchiseId,teamId,activeFranchise,gameTypeId,losses,wins,ties,points,pointPctg) %>%
-  mutate(winPct= wins/(losses+wins+ties))
-#> # A tibble: 104 x 10
-#>    franchiseId teamId activeFranchise gameTypeId losses  wins  ties points
-#>          <int>  <int>           <int>      <int>  <int> <int> <int>  <int>
-#>  1          23      1               1          2   1181  1375   219   3131
-#>  2          23      1               1          3    120   137    NA      2
-#>  3          22      2               1          2   1570  1656   347   3818
-#>  4          22      2               1          3    124   148    NA      8
-#>  5          10      3               1          2   2693  2856   808   6667
-#>  6          10      3               1          3    263   244     8      0
-#>  7          16      4               1          3    212   221    NA      4
-#>  8          16      4               1          2   1429  2054   457   4740
-#>  9          17      5               1          2   1718  1866   383   4263
-#> 10          17      5               1          3    175   206    NA     12
-#> # ... with 94 more rows, and 2 more variables: pointPctg <dbl>, winPct <dbl>
-tbl_df(Season) %>% 
-  select(14,6,8,10,12,13,mostLosses,mostPoints,mostTies,mostWins,mostWinsSeasons)
-#> # A tibble: 38 x 11
-#>    franchiseId fewestLosses fewestPoints fewestTies fewestWins fewestWinsSeaso~
-#>          <int>        <int>        <int>      <int>      <int> <chr>           
-#>  1          38           24           86         NA         39 2019-20 (82)    
-#>  2          37           25           68         10         25 2000-01 (82)    
-#>  3          36           22           57          8         22 2001-02 (82)    
-#>  4          35           20           39          7         14 1999-00 (82)    
-#>  5          34           18           63          7         27 2002-03 (82)    
-#>  6          33           26           60          6         22 2000-01 (82), 2~
-#>  7          32           20           65          5         25 2000-01 (82)    
-#>  8          31           16           44          6         17 1997-98 (82)    
-#>  9          30           21           24          4         10 1992-93 (84)    
-#> 10          29           18           24          2         11 1992-93 (84)    
-#> # ... with 28 more rows, and 5 more variables: mostLosses <int>,
-#> #   mostPoints <int>, mostTies <int>, mostWins <int>, mostWinsSeasons <chr>
-  
-tbl_df(Goalie) %>% 
-  select(4,3,losses,ties,wins) %>%
-  mutate(winPct= wins/(losses+wins+ties))
-#> # A tibble: 1,056 x 6
-#>    franchiseId firstName  losses  ties  wins  winPct
-#>          <int> <chr>       <int> <int> <int>   <dbl>
-#>  1          38 Marc-Andre     50     0    91   0.645
-#>  2          38 Maxime          8     0     6   0.429
-#>  3          38 Oscar           1     0     3   0.75 
-#>  4          38 Malcolm        21     0    30   0.588
-#>  5          38 Dylan           0     0     0 NaN    
-#>  6          38 Garret          0     0     0 NaN    
-#>  7          38 Robin           0     0     3   1    
-#>  8          37 Josh           59    NA    60  NA    
-#>  9          37 Niklas        142    NA   194  NA    
-#> 10          37 Dwayne         71    26    62   0.390
-#> # ... with 1,046 more rows
-
-tbl_df(Skater) %>% 
-  select(5,4,goals,points)
-#> # A tibble: 16,871 x 4
-#>    franchiseId firstName goals points
-#>          <int> <chr>     <int>  <int>
-#>  1          38 Deryk         8     41
-#>  2          38 James        25     44
-#>  3          38 Ryan         17     37
-#>  4          38 David        16     66
-#>  5          38 Jason         0      1
-#>  6          38 Luca          2     14
-#>  7          38 Brayden      11     40
-#>  8          38 Reilly       68    167
-#>  9          38 Tomas         4      6
-#> 10          38 Brandon      15     23
-#> # ... with 16,861 more rows
-```
-
-## The reason of variable I choose
-
 # Exploratory Data Analysis
 
-## Categorical data
+## winPct & futureWin in teamtotalData
 
-*which data is categorical data* *why we choose this categorical data*
+### Treat the winPct as categorical data
 
-### Statistical Summary for categorical data
+I create a new variable called winPct in teamtotalData, if winPct is
+equal or greater than 0.5, which means the total number of wins is
+greater than other kinds of situations (losses or ties), we can conclude
+that those franchises are more likely to win in the future. Thus, I
+would create a new variable called futureWin which is an indicator
+according to whether winPct for each franchise is less than 0.5.
 
-*contingency table*
+\[futureWin=
+\begin{cases}
+1,& winPct \ge 0.5 \\
+0,& \text{O.W.}
+\end{cases}\]
 
-``` r
-# how many teams are in each franchise
-table(TeamTotal$franchiseId)
-#> 
-#>  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
-#>  2  1  3  2  6  2  2  3  3  2  2  6  4  2  4  2  2  2  2  2  4  2  5  2  2  4 
-#> 27 28 29 30 31 32 33 34 35 36 37 38 
-#>  4  5  2  2  2  2  2  2  4  2  2  2
-# how many teams are in each game type
-table(TeamTotal$gameTypeId)
-#> 
-#>  2  3 
-#> 57 47
-# how many teams are in each condition of franchise
-table(TeamTotal$activeFranchise)
-#> 
-#>  0  1 
-#> 18 86
+According to the Contingency table of futureWin, we can know that there
+are three franchises greater than or equal to 0.5, which means those
+three franchises are more likely to win in the future. Also, those three
+franchises are active. And the number of active franchises is more than
+that of inactive franchises.
 
-table(TeamTotal$franchiseId,TeamTotal$activeFranchise)
-#>     
-#>      0 1
-#>   1  0 2
-#>   2  1 0
-#>   3  3 0
-#>   4  2 0
-#>   5  0 6
-#>   6  0 2
-#>   7  2 0
-#>   8  3 0
-#>   9  3 0
-#>   10 0 2
-#>   11 0 2
-#>   12 0 6
-#>   13 4 0
-#>   14 0 2
-#>   15 0 4
-#>   16 0 2
-#>   17 0 2
-#>   18 0 2
-#>   19 0 2
-#>   20 0 2
-#>   21 0 4
-#>   22 0 2
-#>   23 0 5
-#>   24 0 2
-#>   25 0 2
-#>   26 0 4
-#>   27 0 4
-#>   28 0 5
-#>   29 0 2
-#>   30 0 2
-#>   31 0 2
-#>   32 0 2
-#>   33 0 2
-#>   34 0 2
-#>   35 0 4
-#>   36 0 2
-#>   37 0 2
-#>   38 0 2
-# table(TeamTotal$firstSeasonId,TeamTotal$activeFranchise)
-```
+|   | 0 |  1 |
+| - | -: | -: |
+| 0 | 7 | 28 |
+| 1 | 0 |  3 |
 
-``` r
-# sapply(NHLid,function(x){summary(x)})
-# sapply(TeamTotal,function(x){summary(x)})
-```
+Contingency table of futureWin
 
-### Graph display for categorical data
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-*bar chart*
+To sort out the best three franchises and the worst three franchises
+according to the winPct, I arrange the data sets and combine them with
+franchiseData, which help us to connect the franchiseId with its name.
+From the Worst three table of futurnWin, we know that the worst three
+franchises are not active, which might be the reason for their winPct.
+Besides, the best three franchiseId are 1,16,38, and the worst three
+franchiseId are 2,9,13.
 
-## Numeric data
+| franchiseId | teamCommonName | teamPlaceName | sumWins | sumGames | activeFranchise | winPct | futureWin |
+| ----------: | :------------- | :------------ | ------: | -------: | --------------: | -----: | --------: |
+|           1 | Canadiens      | Montréal      |    3878 |     7480 |               1 |   0.52 |         1 |
+|          16 | Flyers         | Philadelphia  |    2275 |     4548 |               1 |   0.50 |         1 |
+|          38 | Golden Knights | Vegas         |     149 |      262 |               1 |   0.57 |         1 |
 
-*which data is categorical data* *why we choose this categorical data*
+Best three table of futurnWin
 
-### Statistical summary for numeric data
+| franchiseId | teamCommonName | teamPlaceName | sumWins | sumGames | activeFranchise | winPct | futureWin |
+| ----------: | :------------- | :------------ | ------: | -------: | --------------: | -----: | --------: |
+|           2 | Wanderers      | Montreal      |       1 |        6 |               0 |   0.17 |         0 |
+|           9 | Quakers        | Philadelphia  |      72 |      260 |               0 |   0.28 |         0 |
+|          13 | Barons         | Cleveland     |     232 |      869 |               0 |   0.27 |         0 |
 
-*summary function*
+Worst three table of futurnWin
 
-### Graph display for numeric data
+### Treat the winPct as numeric data
 
-*box plot, histogram, scatterplot*
+From the summaries, we can know that the mean of winPct is 0.4326, which
+is less than 0.5, which means most values of winPct are less than 0.5.
+According to the histogram, we can see that the distribution of winPct
+is left-skewed. From the side-by-side boxplot, we can notice that, the
+winPct of seven inactives franchises are lesser than that of active
+franchises.
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##  0.1700  0.4225  0.4500  0.4326  0.4675  0.5700
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+## mfWinRatio & steadyWin in seasonData
+
+### Treat the winPct as categorical data
+
+I also create a new variable called mfWinRatio in seasonData, if
+mfWinRatio more equal to 1, which means, the total number of the most
+wins are more closer to that of the fewest wins. However, there are some
+missing values, which need to be picked out considering not knowing the
+true story behind the those missing values. Thus, I would drop those
+missing records first, them I would create a new variable called
+steadyWin which is a indicator according to whether mfWinRatio for each
+franchise is closer to 1.
+
+\[steadyWin=
+\begin{cases}
+1,& mfWinRatio < 2 \\
+0,& \text{O.W.}
+\end{cases}\]
+
+According to the Contingency table of steadyWin, we can know that there
+are three franchises less than 2, which means those three franchises are
+playing more stably. Also, those three franchises are active. And the
+number of active franchises is more than that of inactive franchises.
+
+| Var1 | Freq |
+| :--- | ---: |
+| 0    |   29 |
+| 1    |    3 |
+
+Contingency table of steadyWin
+
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+To sort out the best three franchises and the worst three franchises
+according to the mfWinRatio, I arrange the data sets and combine them
+with franchiseData, which help us to connect the franchiseId with its
+name. Besides, the best three franchiseId are 34,37,38, and the worst
+three franchiseId are 24,28,30. However, all of the most franchises are
+active.
+
+| franchiseId | teamCommonName | teamPlaceName | fewestWins | mostWins | mfWinRatio | steadyWin | activeFranchise |
+| ----------: | :------------- | :------------ | ---------: | -------: | ---------: | --------: | --------------: |
+|          34 | Predators      | Nashville     |         27 |       53 |       1.96 |         1 |               1 |
+|          37 | Wild           | Minnesota     |         25 |       49 |       1.96 |         1 |               1 |
+|          38 | Golden Knights | Vegas         |         39 |       51 |       1.31 |         1 |               1 |
+
+Best three table of steadyWin
+
+| franchiseId | teamCommonName | teamPlaceName | fewestWins | mostWins | mfWinRatio | steadyWin | activeFranchise |
+| ----------: | :------------- | :------------ | ---------: | -------: | ---------: | --------: | --------------: |
+|          24 | Capitals       | Washington    |          8 |       56 |       7.00 |         0 |               1 |
+|          28 | Coyotes        | Arizona       |          9 |       50 |       5.56 |         0 |               1 |
+|          30 | Senators       | Ottawa        |         10 |       52 |       5.20 |         0 |               1 |
+
+Worst three table of steadyWin
+
+### Treat the winPct as numeric data
+
+From the summaries, we can know that the mean of mfWinRatio is 3.327,
+which is greater than 1, which means most values of mfWinRatio are
+greater than 1. According to the histogram, we can see that the
+distribution of mfWinRatio is right-skewed. From the side-by-side
+boxplot, we can notice that, except those missing records, only one
+inactive franchise exists in the seasonData, which might be the season
+why this record seems more steady than other data points.
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ##   1.310   2.353   3.120   3.327   4.115   7.000       6
+
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
+## The best and Worst id
+
+    ## # A tibble: 1 x 3
+    ##   franchiseId winPct mfWinRatio
+    ##         <int>  <dbl>      <dbl>
+    ## 1          38  0.570       1.31
+
+    ## # A tibble: 1 x 3
+    ##   franchiseId winPct mfWinRatio
+    ##         <int>  <dbl>      <dbl>
+    ## 1          28   0.41       5.56
+
+## The difference in goalie of 38 and 28
+
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 # Conclusion
 
