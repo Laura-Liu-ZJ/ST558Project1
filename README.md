@@ -36,14 +36,6 @@ Zhijun Liu
         Coyotes](#the-difference-of-skater-between-golden-knights-and-coyotes)
   - [Conclusion](#conclusion)
 
-``` r
-# prepare for the packages
-library(httr)
-library(jsonlite)
-library(tidyverse)
-library(knitr)
-```
-
 # Introduction
 
 ## Description of JSON Data
@@ -128,6 +120,14 @@ alignment has existed since the 2017–18
 season.(<https://en.wikipedia.org/wiki/Category:National_Hockey_League_teams>)
 
 ### Get the NHL data
+
+``` r
+# prepare for the packages
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(knitr)
+```
 
 ``` r
 # write a function to get specific url
