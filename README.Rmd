@@ -10,15 +10,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE)
 ```
 
-```{r library}
-# prepare for the packages
-library(httr)
-library(jsonlite)
-library(tidyverse)
-library(knitr)
-```
-
-
 # Introduction
 ## Description of JSON Data
 ### What it is?
@@ -49,6 +40,14 @@ The National Hockey League (NHL) is a professional ice hockey league in North Am
 The NHL divides the 31 teams into two conferences: the Eastern Conference and the Western Conference. Each conference is split into two divisions: the Eastern Conference contains 16 teams (eight per division), while the Western Conference has 15 teams (seven in the Central Division and eight in the Pacific Division). The current alignment has existed since the 2017–18 season.(https://en.wikipedia.org/wiki/Category:National_Hockey_League_teams)
 
 ### Get the NHL data
+
+```{r library}
+# prepare for the packages
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(knitr)
+```
 
 ```{r getData}
 # write a function to get specific url
