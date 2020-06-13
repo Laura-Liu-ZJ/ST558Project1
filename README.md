@@ -1,7 +1,7 @@
 Project1
 ================
 Zhijun Liu
-2020-06-11
+2020-06-12
 
   - [Introduction](#introduction)
       - [Description of JSON Data](#description-of-json-data)
@@ -102,6 +102,15 @@ migration.(<https://blog.sqlizer.io/posts/json-store-data/>)
 
 ### What is NHL?
 
+``` r
+# prepare for the package
+library(knitr)
+# show the NHL picture
+include_graphics("WeaverLankow.jpg")
+```
+
+<img src="WeaverLankow.jpg" width="50%" />
+
 The National Hockey League (NHL) is a professional ice hockey league in
 North America, currently comprising 31 teams: 24 in the United States
 and seven in Canada. The NHL is considered to be the premier
@@ -126,7 +135,6 @@ season.(<https://en.wikipedia.org/wiki/Category:National_Hockey_League_teams>)
 library(httr)
 library(jsonlite)
 library(tidyverse)
-library(knitr)
 ```
 
 ``` r

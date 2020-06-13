@@ -4,7 +4,7 @@ author: "Zhijun Liu"
 date: "`r Sys.Date()`"
 output:  
   rmarkdown::github_document:  
-    toc: yes
+    toc: TRUE
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE)
@@ -34,6 +34,12 @@ JSON is perfect for storing temporary data that’s consumed by the entity that 
 
 ## NHL & NHL Data
 ### What is NHL?
+```{r pic,out.width="50%"}
+# prepare for the package
+library(knitr)
+# show the NHL picture
+include_graphics("WeaverLankow.jpg")
+```
 
 The National Hockey League (NHL) is a professional ice hockey league in North America, currently comprising 31 teams: 24 in the United States and seven in Canada. The NHL is considered to be the premier professional ice hockey league in the world, and one of the major professional sports leagues in the United States and Canada. The Stanley Cup, the oldest professional sports trophy in North America, is awarded annually to the league playoff champion at the end of each season.(https://en.wikipedia.org/wiki/National_Hockey_League)
 
@@ -46,7 +52,6 @@ The NHL divides the 31 teams into two conferences: the Eastern Conference and th
 library(httr)
 library(jsonlite)
 library(tidyverse)
-library(knitr)
 ```
 
 ```{r getData}
